@@ -1,4 +1,4 @@
-package com.max.androidutilsmodule;
+package com.max.utils;
 
 import android.app.Application;
 import android.content.Context;

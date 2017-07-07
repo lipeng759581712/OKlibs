@@ -4,6 +4,8 @@ import android.content.Context;
 import android.location.LocationManager;
 
 /**
+ * 手机定位相关的工具类
+ *
  * Created by maxpengli on 2017/7/7.
  */
 

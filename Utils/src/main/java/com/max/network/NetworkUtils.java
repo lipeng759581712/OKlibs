@@ -1,4 +1,4 @@
-package com.max.utils;
+package com.max.network;
 
 
 import android.content.Context;
@@ -13,20 +13,278 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.Log;
 
-import com.tencent.gpframework.log.ALog;
+import com.max.utils.PropertyUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.text.TextUtils.isEmpty;
+
 /**
- * Created by elwinxiao on 2015/10/20.
+ * Created by maxpengli on 2015/10/20.
  */
 public class NetworkUtils {
+    private final static String TAG = "NetworkUtil";
+
+    /**
+     * 判断当前网络是否是移动网络
+     *
+     * @param context
+     * @return boolean
+     */
+    public static boolean isMobile(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
+        if (activeNetInfo != null
+                && activeNetInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断当前网络是否是wifi网络
+     *
+     * @param context
+     * @return boolean
+     */
+    public static boolean isWifi(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
+        if (activeNetInfo != null
+                && activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断当前网络是否是2G网络
+     *
+     * @param context
+     * @return boolean
+     */
+    public static boolean is2G(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
+        if (activeNetInfo != null
+                && (activeNetInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_EDGE
+                || activeNetInfo.getSubtype() == TelephonyManager.NETWORK_TYPE_GPRS || activeNetInfo
+                .getSubtype() == TelephonyManager.NETWORK_TYPE_CDMA)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * wifi是否打开
+     */
+    public static boolean isWifiEnabled(Context context) {
+        ConnectivityManager mgrConn = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        TelephonyManager mgrTel = (TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        return ((mgrConn.getActiveNetworkInfo() != null && mgrConn
+                .getActiveNetworkInfo().getState() == NetworkInfo.State.CONNECTED) || mgrTel
+                .getNetworkType() == TelephonyManager.NETWORK_TYPE_UMTS);
+    }
+
+    /**
+     * 判断是否有网络连接
+     *
+     * @param context
+     * @return
+     */
+    public static boolean isNetworkConnected(Context context) {
+        if (context != null) {
+            // 获取手机所有连接管理对象(包括对wi-fi,net等连接的管理)
+            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context
+                    .CONNECTIVITY_SERVICE);
+            // 获取NetworkInfo对象
+            NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+            //判断NetworkInfo对象是否为空
+            if (networkInfo != null)
+                return networkInfo.isAvailable();
+        }
+        return false;
+    }
+
+    /**
+     * 判断MOBILE网络是否已连接
+     *
+     * @param context
+     * @param context
+     * @return
+     */
+    public static boolean isMobileConnected(Context context) {
+        if (context != null) {
+            //获取手机所有连接管理对象(包括对wi-fi,net等连接的管理)
+            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context
+                    .CONNECTIVITY_SERVICE);
+            //获取NetworkInfo对象
+            NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+            //判断NetworkInfo对象是否为空 并且类型是否为MOBILE
+            if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_MOBILE)
+                return networkInfo.isAvailable();
+        }
+        return false;
+    }
+
+    /**
+     * 获取当前网络连接的类型信息
+     * 原生
+     *
+     * @param context
+     * @return
+     */
+    public static int getConnectedType(Context context) {
+        if (context != null) {
+            //获取手机所有连接管理对象
+            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context
+                    .CONNECTIVITY_SERVICE);
+            //获取NetworkInfo对象
+            NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+            if (networkInfo != null && networkInfo.isAvailable()) {
+                //返回NetworkInfo的类型
+                return networkInfo.getType();
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 获取当前的网络状态 ：没有网络-0：WIFI网络1：4G网络-4：3G网络-3：2G网络-2
+     * 自定义
+     *
+     * @param context
+     * @return
+     */
+    public static int getAPNType(Context context) {
+        //结果返回值
+        int netType = 0;
+        //获取手机所有连接管理对象
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context
+                .CONNECTIVITY_SERVICE);
+        //获取NetworkInfo对象
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+        //NetworkInfo对象为空 则代表没有网络
+        if (networkInfo == null) {
+            return netType;
+        }
+        //否则 NetworkInfo对象不为空 则获取该networkInfo的类型
+        int nType = networkInfo.getType();
+        if (nType == ConnectivityManager.TYPE_WIFI) {
+            //WIFI
+            netType = 1;
+        } else if (nType == ConnectivityManager.TYPE_MOBILE) {
+            int nSubType = networkInfo.getSubtype();
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService
+                    (Context.TELEPHONY_SERVICE);
+            //3G   联通的3G为UMTS或HSDPA 电信的3G为EVDO
+            if (nSubType == TelephonyManager.NETWORK_TYPE_LTE
+                    && !telephonyManager.isNetworkRoaming()) {
+                netType = 4;
+            } else if (nSubType == TelephonyManager.NETWORK_TYPE_UMTS
+                    || nSubType == TelephonyManager.NETWORK_TYPE_HSDPA
+                    || nSubType == TelephonyManager.NETWORK_TYPE_EVDO_0
+                    && !telephonyManager.isNetworkRoaming()) {
+                netType = 3;
+                //2G 移动和联通的2G为GPRS或EGDE，电信的2G为CDMA
+            } else if (nSubType == TelephonyManager.NETWORK_TYPE_GPRS
+                    || nSubType == TelephonyManager.NETWORK_TYPE_EDGE
+                    || nSubType == TelephonyManager.NETWORK_TYPE_CDMA
+                    && !telephonyManager.isNetworkRoaming()) {
+                netType = 2;
+            } else {
+                netType = 2;
+            }
+        }
+        return netType;
+    }
+
+
+
+    /**
+     * 获得本机ip地址
+     *
+     * @return
+     */
+    public static String GetHostIp() {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface
+                    .getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> ipAddr = intf.getInetAddresses(); ipAddr
+                        .hasMoreElements(); ) {
+                    InetAddress inetAddress = ipAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+
+
+    /***
+     * 判断是否有外网连接（普通方法不能判断外网的网络是否连接，比如连接上局域网）
+     *
+     * @return
+     */
+
+    public static final boolean ping() {
+
+        String result = null;
+        try {
+            String ip = "www.baidu.com";// ping 的地址，可以换成任何一种可靠的外网
+            Process p = Runtime.getRuntime().exec("ping -c 3 -w 100 " + ip);// ping网址3次
+            // 读取ping的内容，可以不加
+            InputStream input = p.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(input));
+            StringBuffer stringBuffer = new StringBuffer();
+            String content = "";
+            while ((content = in.readLine()) != null) {
+                stringBuffer.append(content);
+            }
+            Log.d("------ping-----", "result content : " + stringBuffer.toString());
+            // ping的状态
+            int status = p.waitFor();
+            if (status == 0) {
+                result = "success";
+                return true;
+            } else {
+                result = "failed";
+            }
+        } catch (IOException e) {
+            result = "IOException";
+        } catch (InterruptedException e) {
+            result = "InterruptedException";
+        } finally {
+            Log.d("----result---", "result = " + result);
+        }
+        return false;
+
+    }
+
     public static String getLocalIp() {
         return getIPAddress(true);
     }
@@ -80,9 +338,15 @@ public class NetworkUtils {
     }
 
 
-    private final static String TAG = "NetworkUtil";
 
-    // ------------------ common -------------------
+
+
+
+    /**
+     * 是否网络可用
+     * @param context
+     * @return
+     */
     public static boolean isNetworkAvailable(Context context) {
         NetworkInfo info = getActiveNetworkInfo(context);
         // 这里必须用isConnected,不能用avaliable，因为有网络的情况isAvailable也可能是false
@@ -111,7 +375,7 @@ public class NetworkUtils {
                     .getSystemService(Context.CONNECTIVITY_SERVICE);
             return connMgr.getActiveNetworkInfo();
         } catch (Throwable e) {
-            ALog.e(TAG, "fail to get active network info: " + e);
+            Log.e(TAG, "fail to get active network info: " + e);
             return null;
         }
     }
@@ -171,23 +435,34 @@ public class NetworkUtils {
         sAPNProxies.put("ctwap", new NetworkProxy("10.0.0.200", 80));
     }
 
+
     public static NetworkProxy getProxy(Context context, boolean apnProxy) {
         return !apnProxy ? getProxy(context) : getProxyByAPN(context);
     }
 
+
+    /**
+     * 获取代理
+     * @param context
+     * @return
+     */
     public static NetworkProxy getProxy(Context context) {
         if (!isViaMobile(context)) {
             return null;
         }
         String proxyHost = getProxyHost(context);
         int proxyPort = getProxyPort(context);
-        if (!isEmpty(proxyHost) && proxyPort >= 0) {
+        if (TextUtils.isEmpty(proxyHost) && proxyPort >= 0) {
             return new NetworkProxy(proxyHost, proxyPort);
         }
         return null;
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * 获取代理的主机
+     * @param context
+     * @return
+     */
     private static String getProxyHost(Context context) {
         String host = null;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -198,7 +473,12 @@ public class NetworkUtils {
         return host;
     }
 
-    @SuppressWarnings("deprecation")
+
+    /**
+     * 获取代理端口号
+     * @param context
+     * @return
+     */
     private static int getProxyPort(Context context) {
         int port = -1;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -220,6 +500,12 @@ public class NetworkUtils {
         return port;
     }
 
+
+    /**
+     * 通过APN获取网络代理
+     * @param context
+     * @return
+     */
     public static NetworkProxy getProxyByAPN(Context context) {
         if (!isViaMobile(context)) {
             return null;
@@ -228,6 +514,8 @@ public class NetworkUtils {
         NetworkProxy proxy = sAPNProxies.get(apn);
         return proxy == null ? null : proxy.copy();
     }
+
+
 
     //接入点的名称：
     //移动2G/2.5G cmnet cmwap
@@ -244,12 +532,12 @@ public class NetworkUtils {
     public static String getAPN(Context context) {
         NetworkInfo activeNetInfo = getActiveNetworkInfo(context);
         if (activeNetInfo == null) {
-            ALog.e(TAG, "no active network");
+            Log.e(TAG, "no active network");
             return null;
         }
 
         final int subNetworkType = activeNetInfo.getSubtype();
-        ALog.d(TAG, "getAPN, subNetworkType: " + subNetworkType);
+        Log.d(TAG, "getAPN, subNetworkType: " + subNetworkType);
 
         String apn = null;
         if (activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
@@ -271,7 +559,7 @@ public class NetworkUtils {
                 }
             }
 
-            if (TextUtils.isEmpty(apn)) {
+            if (isEmpty(apn)) {
                 apn = activeNetInfo.getExtraInfo();
             }
         }
@@ -283,7 +571,9 @@ public class NetworkUtils {
         return apn;
     }
 
-    // ---------------- dns ------------------
+    /**
+     * DNS数据类
+     */
     public final static class DNS {
         public String primary;
         public String secondary;
@@ -297,6 +587,12 @@ public class NetworkUtils {
         }
     }
 
+
+    /**
+     * 获取DNS
+     * @param context
+     * @return
+     */
     public static DNS getDNS(Context context) {
         DNS dns = new DNS();
         if (context != null) {
@@ -317,6 +613,12 @@ public class NetworkUtils {
         return dns;
     }
 
+
+    /**
+     * 32位int型的IP地址 转  String类型的IP地址
+     * @param ip
+     * @return
+     */
     private static String int32ToIPStr(int ip) {
         StringBuffer buffer = new StringBuffer();
 
@@ -328,50 +630,54 @@ public class NetworkUtils {
         return buffer.toString();
     }
 
-    // ---------------- utils ------------------
-    private static boolean isEmpty(String str) {
-        return str == null || str.length() == 0;
-    }
 
-    // -----------------------------------------
-    private NetworkUtils() {
-        // static use.
-    }
 
-    /****************************************************
-     * 获取移动网络的类型
-     ****************************************************/
+
 
     /**
+     * 获取移动网络的类型
+     *
      * 调用说明：手机当前活动连接是移动网络才意义，否则返回值为0
      *
      * @param context
-     * @return
+     * @return 2G、3G、4G
      */
     static public int getMobileDataNetWorkClass(Context context) {
         TelephonyManager tm;
         try {
             tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             if (tm == null) {
-                ALog.e(TAG, "fail to get TELEPHONY_SERVICE.");
+                Log.e(TAG, "fail to get TELEPHONY_SERVICE.");
                 return NETWORK_TYPE_UNKNOWN;
             }
         } catch (Throwable e) {
-            ALog.e(TAG, "fail to get TELEPHONY_SERVICE: " + e);
+            Log.e(TAG, "fail to get TELEPHONY_SERVICE: " + e);
             return NETWORK_TYPE_UNKNOWN;
         }
         final int networkType = tm.getNetworkType();
-        ALog.d(TAG, "Mobile network type: " + networkType);
+        Log.d(TAG, "Mobile network type: " + networkType);
         final int networkClass = getNetworkClass(networkType);
         return networkClass;
     }
 
+
+    /**
+     * 获取手机的MAC地址
+     * @param context
+     * @return
+     */
     public static String getMacAdress(Context context) {
         WifiManager wifiMng = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMng.getConnectionInfo();
         return wifiInfo.getMacAddress();
     }
 
+
+
+
+    /**
+     * 网络种类
+     */
     /**
      * Unknown network class. {@hide}
      */
@@ -389,6 +695,10 @@ public class NetworkUtils {
      */
     public static final int NETWORK_CLASS_4_G = 3;
 
+
+    /**
+     * 网络类型
+     */
     /**
      * Network type is unknown
      */

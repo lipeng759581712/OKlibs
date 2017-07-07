@@ -2,8 +2,20 @@ package com.max.log;
 
 import android.util.Log;
 
+
+/*
+使用说明：
+ALog.e("tag","list === null")；
+*/
+
+
 public class ALog {
 
+	/**
+	 * 以下方法具体调用哪个，是由接口Impl决定的
+	 * @param tag
+	 * @param message
+	 */
 	public static void v(String tag, String message) {
 		getImpl().v(tag, message);
 	}
@@ -24,6 +36,7 @@ public class ALog {
 		getImpl().e(tag, message);
 	}
 
+
 	private static LoggerInterface getImpl() {
 		return Accessor.getImpl();
 	}
@@ -32,19 +45,60 @@ public class ALog {
 		private static LoggerInterface sLoggerImpl;
 		private static LoggerInterface getImpl() {
 			if (sLoggerImpl == null) {
+				/**
+				 * 这里指出了是AndroidLogcatImpl接口的实现
+				 */
 				sLoggerImpl = new AndroidLogcatImpl();
 			}
 			return sLoggerImpl;
 		}
-		
+
+		/**
+		 * 也可以set一个接口进来
+		 * @param impl
+		 */
 		public static void setImpl(LoggerInterface impl) {
 			sLoggerImpl = impl;
 		}
 	}
-	
+
+
+
+
+	/*
+	使用说明：
+
+	private static final ALog.ALogger logger = new ALog.ALogger("tag", "QTConnector");
+	logger.i("open connection");
+
+	*/
+
+	/**
+	 * 这个日志类是能够打印出详细的信息的,(tag,类名，前缀，线程名称)
+	 */
 	public static class ALogger {
-		
+
+		/**
+		 * 是否显示日志（true 不显示）
+		 */
 		private boolean mIsDisabled;
+
+		/**
+		 * 日志开关
+		 * @param isEnabled
+		 * @return
+		 */
+		public ALogger setEnabeState(boolean isEnabled) {
+			mIsDisabled = !isEnabled;
+			return this;
+		}
+
+		/**
+		 *
+		 * @param tag  log tag
+		 * @param clasz 类名
+		 * @param prefix 前缀
+		 */
 		
 		private String mTag;
 		private String mPrefix;
@@ -57,12 +111,8 @@ public class ALog {
 		public ALogger(String tag, String prefix) {
 			this(tag, null, prefix);
 		}
-		
-		public ALogger setEnabeState(boolean isEnabled) {
-			mIsDisabled = !isEnabled;
-			return this;
-		}
-		
+
+
 		public ALogger(String tag, Class<?> clasz, String prefix) {
 			mTag = tag;
 			mPrefix = prefix;
@@ -74,14 +124,20 @@ public class ALog {
 			}
 		}
 		
+
+		/**
+		 * 日志接口还是使用（Android Log）
+		 * @return
+		 */
+		private LoggerInterface getImpl() {
+			return ALog.getImpl();
+		}
+
 		public void v(String text) {
 			if (mIsDisabled) return;
 			getImpl().v(mTag, formatText(text));
 		}
 
-		private LoggerInterface getImpl() {
-			return ALog.getImpl();
-		}
 		
 		public void d(String text) {
 			if (mIsDisabled) return;
@@ -106,6 +162,7 @@ public class ALog {
 		private String formatText(String text) {
 			final StringBuilder builder = new StringBuilder();
 
+
 			if (mClasz != null){
 				builder.append("[");
 				builder.append(mClasz.getSimpleName());
@@ -127,7 +184,12 @@ public class ALog {
 			return builder.append(text).toString();
 		}
 	}
-	
+
+
+
+	/**
+	 * 日志接口的实现类（Android日志）
+	 */
 	public static class AndroidLogcatImpl implements LoggerInterface {
 
 		@Override
@@ -156,6 +218,9 @@ public class ALog {
 		}
 	}
 
+	/**
+	 * 日志接口
+	 */
 	public interface LoggerInterface {
 		void v(String tag, String message);
 		void d(String tag, String message);

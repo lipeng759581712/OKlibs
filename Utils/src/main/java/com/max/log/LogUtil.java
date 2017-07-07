@@ -3,7 +3,7 @@ package com.max.log;
 import android.util.Log;
 
 /**
- * Created by clarkehe on 4/27/16.
+ * Created by maxpengli on 4/27/16.
  * 由于从其它地方引入了代码，使用的是LogUtil，统一转成ALog的实现
  * 除录制SDK及插件外，其他的都使用ALog.
  */

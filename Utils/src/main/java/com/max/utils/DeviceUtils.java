@@ -29,12 +29,9 @@ public class DeviceUtils {
     /**
      * 查询设备IMEI号
      */
-    public static String getDeviceId(Context context) {
+    public static String getIMEI(Context context) {
         TelephonyManager telephoneManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         return telephoneManager.getDeviceId();
     }
 
-    public static String getIMEI(Context context) {
-        return getDeviceId(context);
-    }
 }

@@ -6,8 +6,6 @@ import android.content.Context;
 import android.text.format.Formatter;
 import android.util.Log;
 
-import com.tencent.gpframework.log.ALog;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -86,7 +84,7 @@ public class HardwareInfoUtil {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream));
                 String line = reader.readLine();
                 sCpuFrequence = Long.parseLong(line);
-                ALog.i(TAG, "sCpuFrequence:" + sCpuFrequence);
+//                ALog.i(TAG, "sCpuFrequence:" + sCpuFrequence);
             } catch (IOException e) {
                 Log.e(TAG, "getCpuFrequence IOException occured,e=", e);
                 sCpuFrequence = -1;
@@ -118,7 +116,7 @@ public class HardwareInfoUtil {
                     //initial_memory = Integer.valueOf(arrayOfString[1]).intValue() * 1024;// 获得系统总内存，单位是KB，乘以1024转换为Byte
                     final long sizeInKB = Long.parseLong(arrayOfString[1]);
                     initial_memory = sizeInKB * 1024;
-                    ALog.i(TAG, "initial_memory:" + initial_memory);
+//                    ALog.i(TAG, "initial_memory:" + initial_memory);
                 }
                 localBufferedReader.close();
             } catch (IOException e) {

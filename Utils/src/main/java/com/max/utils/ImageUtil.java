@@ -1,4 +1,4 @@
-package com.max.androidutilsmodule;
+package com.max.utils;
 
 import android.content.ContentResolver;
 import android.content.Context;

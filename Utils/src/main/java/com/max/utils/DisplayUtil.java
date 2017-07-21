@@ -1,4 +1,4 @@
-package com.max.androidutilsmodule;
+package com.max.utils;
 
 import android.content.Context;
 import android.graphics.Point;

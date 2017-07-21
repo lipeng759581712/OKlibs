@@ -1,7 +1,5 @@
 package com.max.utils;
 
-import com.tencent.gpframework.log.ALog;
-
 import java.lang.reflect.Field;
 
 /**
@@ -26,18 +24,18 @@ public class ReflectUtils {
             field.setAccessible(true);
             Object value1 = (F) field.get(object);
             if (value1 == null) {
-                ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: actual value is null, fieldType=" + field.getType());
+//                ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: actual value is null, fieldType=" + field.getType());
             } else if (defaultValue == null || defaultValue.getClass().getCanonicalName().equals(value1.getClass().getCanonicalName())) {
                 value = (F)value1;
             } else {
-                ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + "error type, expectType=" + value.getClass().getSimpleName() + ", actualType=" +  value1.getClass().getSimpleName());
+//                ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + "error type, expectType=" + value.getClass().getSimpleName() + ", actualType=" +  value1.getClass().getSimpleName());
             }
         } catch (NoSuchFieldException e) {
-            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
+//            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
         } catch (IllegalAccessException e) {
-            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
+//            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
         } catch (ClassCastException e) {
-            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
+//            ALog.e("ReflectUtils", "extract field[" + fieldName + "] failed: " + e);
         }
 
         return value;

@@ -1,5 +1,5 @@
 
-package com.max.androidutilsmodule;
+package com.max.utils;
 
 import android.os.Handler;
 import android.os.HandlerThread;

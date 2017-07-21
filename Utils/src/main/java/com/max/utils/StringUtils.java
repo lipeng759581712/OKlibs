@@ -1,6 +1,6 @@
 package com.max.utils;
 
-import com.tencent.gpframework.log.ALog;
+import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 
@@ -26,7 +26,7 @@ public class StringUtils {
         try {
             ret = Long.parseLong(str);
         } catch (NumberFormatException e) {
-            ALog.e("StringUtils", e.toString());
+            Log.e("StringUtils", e.toString());
         }
         return ret;
     }

@@ -1,4 +1,4 @@
-package com.max.androidutilsmodule;
+package com.max.utils;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

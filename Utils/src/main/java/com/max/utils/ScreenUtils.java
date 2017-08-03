@@ -3,6 +3,7 @@ package com.max.utils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.DisplayMetrics;
@@ -13,14 +14,111 @@ import android.view.WindowManager;
 import java.lang.reflect.Method;
 
 /**
- * 显示工具类，提供了获取屏幕显示的各种指标（如高度、宽度等）、尺寸单位之间的转换方法
+ * 获得屏幕相关的辅助类
+ *
+ * Created by maxpengli on 2017/8/3.
  */
-public class DisplayUtils {
+
+public class ScreenUtils {
+
+    private ScreenUtils() {
+		/* cannot be instantiated */
+        throw new UnsupportedOperationException("cannot be instantiated");
+    }
+
     /**
-     * *******************************************************************************************************
-     * ************************************* 新方法获取屏幕高宽度 开始 *****************************************
-     * *******************************************************************************************************
+     * 获得屏幕高度
+     *
+     * @param context
+     * @return
      */
+    public static int getScreenWidth(Context context) {
+        WindowManager wm = (WindowManager) context
+                .getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(outMetrics);
+        return outMetrics.widthPixels;
+    }
+
+    /**
+     * 获得屏幕宽度
+     *
+     * @param context
+     * @return
+     */
+    public static int getScreenHeight(Context context) {
+        WindowManager wm = (WindowManager) context
+                .getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(outMetrics);
+        return outMetrics.heightPixels;
+    }
+
+    /**
+     * 获得状态栏的高度
+     *
+     * @param context
+     * @return
+     */
+    public static int getStatusHeight(Context context) {
+        int statusHeight = -1;
+        try {
+            Class<?> clazz = Class.forName("com.android.internal.R$dimen");
+            Object object = clazz.newInstance();
+            int height = Integer.parseInt(clazz.getField("status_bar_height")
+                    .get(object).toString());
+            statusHeight = context.getResources().getDimensionPixelSize(height);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return statusHeight;
+    }
+
+    /**
+     * 获取当前屏幕截图，包含状态栏
+     *
+     * @param activity
+     * @return
+     */
+    public static Bitmap snapShotWithStatusBar(Activity activity) {
+        View view = activity.getWindow().getDecorView();
+        view.setDrawingCacheEnabled(true);
+        view.buildDrawingCache();
+        Bitmap bmp = view.getDrawingCache();
+        int width = getScreenWidth(activity);
+        int height = getScreenHeight(activity);
+        Bitmap bp = null;
+        bp = Bitmap.createBitmap(bmp, 0, 0, width, height);
+        view.destroyDrawingCache();
+        return bp;
+
+    }
+
+    /**
+     * 获取当前屏幕截图，不包含状态栏
+     *
+     * @param activity
+     * @return
+     */
+    public static Bitmap snapShotWithoutStatusBar(Activity activity) {
+        View view = activity.getWindow().getDecorView();
+        view.setDrawingCacheEnabled(true);
+        view.buildDrawingCache();
+        Bitmap bmp = view.getDrawingCache();
+        Rect frame = new Rect();
+        activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(frame);
+        int statusBarHeight = frame.top;
+
+        int width = getScreenWidth(activity);
+        int height = getScreenHeight(activity);
+        Bitmap bp = null;
+        bp = Bitmap.createBitmap(bmp, 0, statusBarHeight, width, height
+                - statusBarHeight);
+        view.destroyDrawingCache();
+        return bp;
+
+    }
+
 
     /**
      * 获取APP应用区域
@@ -288,24 +386,50 @@ public class DisplayUtils {
         return new Point(view.getMeasuredWidth(), view.getMeasuredHeight());
     }
 
+
     /**
-     * 获得状态栏的高度
+     * 获取屏幕宽度和高度，单位为px
+     *
      * @param context
      * @return
-     * by Hankkin at:2015-10-07 21:16:43
      */
-    public static int getStatusHeight(Context context) {
+    public static Point getScreenMetrics(Context context) {
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        int w_screen = dm.widthPixels;
+        int h_screen = dm.heightPixels;
+        return new Point(w_screen, h_screen);
 
-        int statusHeight = -1;
-        try {
-            Class<?> clazz = Class.forName("com.android.internal.R$dimen");
-            Object object = clazz.newInstance();
-            int height = Integer.parseInt(clazz.getField("status_bar_height")
-                    .get(object).toString());
-            statusHeight = context.getResources().getDimensionPixelSize(height);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return statusHeight;
     }
+
+    public enum Orientation {
+        reversal_vertical(270), reversal_horizontal(180), vertical(90), horizontal(0);
+        private int o;
+
+        private Orientation(int o) {
+            this.o = o;
+        }
+
+        public int getOrientation() {
+            return o;
+        }
+    }
+
+
+    /**
+     * 获取屏幕长宽比
+     *
+     * @param context
+     * @return
+     */
+    public static float getScreenRate(Context context) {
+        Point P = getScreenMetrics(context);
+        float H = P.y;
+        float W = P.x;
+        if (H > W) {
+            return (H / W);
+        } else {
+            return (W / H);
+        }
+    }
+
 }

@@ -7,6 +7,16 @@ import java.io.File;
 
 public class IntentUtils {
 
+	/**
+	 * 判断intent和它的bundle是否为空
+	 *
+	 * @param intent
+	 * @return
+	 */
+	public static boolean isBundleEmpty(Intent intent) {
+		return (intent == null) && (intent.getExtras() == null);
+	}
+
 	public static Intent buildAppInstallIntent(String filePath) {
 		File file = new File(filePath);
 		return buildAppInstallIntent(file);
@@ -29,6 +39,11 @@ public class IntentUtils {
 		return intent;
 	}
 
+	/**
+	 * 创建浏览器Intent
+	 * @param url
+	 * @return
+	 */
 	public static Intent buildBrowserLinkIntent(String url) {
 		return new Intent("android.intent.action.VIEW", Uri.parse(url));
 	}
